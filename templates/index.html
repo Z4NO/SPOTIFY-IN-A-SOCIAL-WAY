@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles/style.css') }}">
+        <link rel="stylesheet" type="text/css" href="/static/styles/style.css">
+        <title>Better spotify stats</title>
+    </head>
+  <body>
+    <div class="waveWrapper waveAnimation">
+      <div class="waveWrapperInner bgTop">
+        <div class="wave waveTop" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-top.png')"></div>
+      </div>
+      <div class="waveWrapperInner bgMiddle">
+        <div class="wave waveMiddle" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-mid.png')"></div>
+      </div>
+      <div class="waveWrapperInner bgBottom">
+        <div class="wave waveBottom" style="background-image: url('http://front-end-noobs.com/jecko/img/wave-bot.png')"></div>
+      </div>
+    </div>
+    <h1  class="Tittle" >Better Discord spotify</h1>
+    <form class="form" method="POST" autocomplete="off">
+      <div class="form-title"><span>Inicia sesión en</span></div>
+       <div class="title-2"><span>Discord</span></div>
+       <div class="input-container">
+         <input class="input-mail" type="ID" name="ID" placeholder="ID">
+         <span> </span>
+       </div>
+ 
+      <section class="bg-stars">
+        <span class="star"></span>
+        <span class="star"></span>
+        <span class="star"></span>
+        <span class="star"></span>
+      </section>
+      <div class="input-container">
+        <input class="input-pwd" type="Key"  name="Key"placeholder="Clave">
+      </div>
+      <button type="submit" class="submit">
+        <span class="sign-text">Login</span>
+      </button>
+ 
+    </form>
+  </body>
+  <script src="animations.js"></script>
+</html>

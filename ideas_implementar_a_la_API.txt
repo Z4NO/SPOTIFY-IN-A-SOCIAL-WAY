@@ -1,0 +1,15 @@
+Añadir a la cola más canciones del mismo artista 📈
+Añadir canción  actual a una playlist / si pone un nombre que no existe crea la playlist y la añade ( in progress) 📈
+recomendar playlist  
+recomendar canciones
+mejores artistas del momento por género (desarrollo)
+Los 25 artitas más escuchados por ti  en el ultimo mes , ultimo 6 meses , todo el tiempo 📈
+Las 25 canciones más escuchadas por ti  en el ultimo mes , ultimo 6 meses , todo el tiempo 📈
+L0s 25 generos más escuchados por ti  en el ultimo mes , ultimo 6 meses , todo el tiempo 📈
+Limpiar canciones duplicadas de una librería de Spotify 📈
+Crear una playlist con canciones basadas en tus gustos
+Sugerir canciones según el mood de una persona 
+Crear playlist en comunidad es decir , donde las personas podrán votar para añadir canciones a una playlist hechas por muchas personas , además de añadir canciones basadas en géneros / artistas votados 📈
+Si dos personas estan logueadas que puedas dar like / añadir la cancion que esta escuchando el otro a tu playlist 📈
+Visualizar el perfil de un usuario si está logueado 📈
+Añadir a la cola canciones que esta escuchando otro user si esta logueado 📈

@@ -156,3 +156,46 @@ def create_playlist(user_id, playlist_name, playlist_description, is_public, is_
 
     return jsonify(playlist)
 
+#Añadir canciones a una playlist
+"""
+Adds a song to a specified playlist for a given user.
+This endpoint allows adding a track to a Spotify playlist by providing the user ID, playlist ID, 
+and track URI. It handles token validation and refresh if necessary.
+Args:
+    user_id (str): The ID of the user whose playlist will be modified.
+    playlist_id (str): The ID of the playlist to which the song will be added.
+    track_uri (str): The Spotify URI of the track to be added.
+Returns:
+    Response: A JSON response indicating success or failure.
+        - On success: A JSON object with a success message and HTTP status code 200.
+        - On failure: An error message and HTTP status code 500.
+Raises:
+    Redirect: If the user's token is expired, redirects to the token refresh endpoint with 
+              the necessary parameters to retry the operation after refreshing the token.
+"""
+@playlists.route('/add_song_to_playlist/<user_id>/<playlist_id>/<track_uri>')
+def add_songs_to_playlist(user_id, playlist_id, track_uri):
+    base_manager = BaseManager()
+    token = base_manager._obtain_user_token(user_id)
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        orginial_params = request.view_args.copy()
+        return redirect(url_for('refresh_token', rute_back='playlists_operations.add_songs_to_playlist', refresh_token=refresh_token_obteined, id=user_id, original_params=orginial_params))
+
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+
+    # Añadir las canciones a la playlist
+    data = {
+        'uris': [track_uri],
+        'position': 0
+    }
+
+    response = requests.post(API_BASE_URL + f'playlists/{playlist_id}/tracks', headers=headers, json=data)
+    if response.status_code != 201:
+        return f"Error al añadir canciones a la playlist {response.text}" , 500
+
+    return jsonify({"message": "Canciones añadidas a la playlist correctamente"}), 200

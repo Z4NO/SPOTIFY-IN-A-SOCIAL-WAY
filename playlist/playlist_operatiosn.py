@@ -151,8 +151,8 @@ def create_playlist(user_id, playlist_name, playlist_description, is_public, is_
 
 
     # Añadir la playlist colaborativa a la base de datos del usuario
-    base_manager._add_coop_playlists(user_id, [playlist['id']])
-    
+    if( is_collaborative == True):
+        base_manager._add_coop_playlists(user_id, [playlist['id']])
 
     return jsonify(playlist)
 
@@ -199,3 +199,37 @@ def add_songs_to_playlist(user_id, playlist_id, track_uri):
         return f"Error al añadir canciones a la playlist {response.text}" , 500
 
     return jsonify({"message": "Canciones añadidas a la playlist correctamente"}), 200
+
+#Ncesitamos añadir a la base de datos las playlist colaborativas que podamos extraer del usuario de spotify para actualizarlas en la base de datos
+@playlists.route('/refresh_coops_playlists_from_spotify/<user_id>')
+def refresh_coops_playlists_from_spotify(user_id):
+    base_manager = BaseManager()
+    token = base_manager._obtain_user_token(user_id)
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        orginial_params = request.view_args.copy()
+        return redirect(url_for('refresh_token', rute_back='playlists_operations.get_coops_playlists_from_spotify', refresh_token=refresh_token_obteined, id=user_id, original_params=orginial_params))
+
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    response = requests.get(API_BASE_URL + 'me/playlists', headers=headers)
+    if response.status_code != 200:
+        return f"Error al obtener las playlists {response.text}" , 500
+    playlists = response.json()
+
+    # Filtrar las playlists colaborativas
+    coops_playlists = [playlist for playlist in playlists['items'] if playlist['collaborative'] == 'True'] 
+    if len(coops_playlists) == 0:
+        return "El usuario no tiene playlists colaborativas", 500
+
+    # Añadir las playlists colaborativas a la base de datos del usuario
+    try:
+        base_manager._add_coop_playlists(user_id, coops_playlists)
+        return jsonify({"message": f"Playlists colaborativas añadidas a la base de datos correctamente {coops_playlists}"}), 200
+    except Exception as e:
+        return f"Error al añadir las playlists colaborativas a la base de datos {e}", 500
+
+    

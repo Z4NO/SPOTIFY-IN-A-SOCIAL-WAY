@@ -242,7 +242,6 @@ Returns:
     If there is an error updating the user, returns a 500 error.
 """
 @app.route('/refresh_token')
-@cache.cached(timeout=60)
 def refresh_token():
     rute_back = request.args.get('rute_back')
     refresh_token = request.args.get('refresh_token')

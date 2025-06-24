@@ -39,7 +39,7 @@ Raises:
     HTTPException: If there is an error in the request to the Spotify API.
 """
 @player.route('/top/<user_id>/<type>')
-@cache.cached(timeout=60)
+@cache.cached(timeout=50)
 def get_top_items(user_id, type):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
@@ -83,7 +83,6 @@ Returns:
               If there is an error adding the song to the playlist, returns a 500 error with a message.
 """
 @player.route('/add_target_song_to_playlist/<user_id>/<target_id>/<playlist_id>')
-@cache.cached(timeout=60)
 def add_song_to_playlist(user_id, target_id, playlist_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
@@ -164,7 +163,6 @@ Raises:
     501: If the user is not a premium user and cannot add songs to the queue.
 """
 @player.route('/add_target_song_to_queue/<user_id>/<target_id>/')
-@cache.cached(timeout=60)
 def add_target_song_to_queue(user_id, target_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)

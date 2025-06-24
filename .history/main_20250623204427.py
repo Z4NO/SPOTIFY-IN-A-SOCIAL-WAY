@@ -1,4 +1,3 @@
-from cache_app import cache
 from flask import Flask, redirect, request, jsonify,  render_template, url_for
 from flask import session
 from tracks.tracks_operations import track as tracks_operations
@@ -22,14 +21,6 @@ load_dotenv()
 app = Flask(__name__)
 # Generar una clave secreta para la app
 app.secret_key = secrets.token_hex(16)
-
-# Configura la caché (modo simple para pruebas)
-app.config['CACHE_TYPE'] = 'SimpleCache'
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300
-
-# Inicializa la caché
-cache.init_app(app)
-
 #Registrar los blueprints
 app.register_blueprint(tracks_operations)
 app.register_blueprint(playlist_operations)
@@ -207,22 +198,56 @@ def get_playlists():
 
     return jsonify(playlists)
 
+# Añadir la canción que estas escuchando a una playlist
+@app.route('/add_song_to_playlist/<user_id>/<playlist_id>/')
+def add_song_to_playlist(user_id, playlist_id):
+    base_manager = BaseManager()
+    token = base_manager._obtain_user_token(user_id)
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        return redirect(url_for('refresh_token', rute_back=f'/add_song_to_playlist/{user_id}/{playlist_id}', refresh_token=refresh_token_obteined, id=user_id))
+    
+    # Primero antes de nada debemos obtener la canción que está escuchando el usuario
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    response = requests.get(API_BASE_URL + 'me/player', headers=headers)
+    song = response.json()
+    if 'item' in song:
+        uri_actual_track = song['item']['uri']
+        id_actual_track = song['item']['id']
+        name_actual_track = song['item']['name']
+    else:
+        return "No track is currently playing:" + {song}, 500
 
 
-"""
-Endpoint to check if a user is logged in.
-This endpoint checks if a user with the given ID is logged in by verifying their session.
-Args:
-    id (str): The user ID to check.
-Returns:
-    Response: A JSON response indicating whether the user is logged in or not.
-"""
-@app.route('/check_if_user_is_logged/<id>')
-@cache.cached(timeout=60)
-def check_if_user_is_logged(id):
-    is_logged_in = BaseManager()._check_user_is_login(id)
-    return jsonify({'is_logged_in': is_logged_in})
+    # Ahora con la uri obtenida de la canción que está escuchando el usuario, la añadimos a la playlist
+    
+    headers = {
+        "Content-Type": "application/json",
+        'Authorization': f'Bearer {token}'
+    }
 
+    req_body = {
+        'uris': [uri_actual_track],
+        'position': 0
+    }
+
+    try:
+        response = requests.post(API_BASE_URL + f'playlists/{playlist_id}/tracks', headers=headers, json=req_body)
+        if response.status_code != 201:
+            return f"Error al añadir la canción a la playlist: {response.text}", 500
+        
+        return jsonify({
+            "message": "Canción añadida a la playlist correctamente",
+            "track_id": id_actual_track,
+            "track_name": name_actual_track,
+            "track_uri": uri_actual_track
+        }), 200
+    except Exception as e:
+        return "Error al añadir la canción a la playlist", 500
     
 
 
@@ -242,7 +267,6 @@ Returns:
     If there is an error updating the user, returns a 500 error.
 """
 @app.route('/refresh_token')
-@cache.cached(timeout=60)
 def refresh_token():
     rute_back = request.args.get('rute_back')
     refresh_token = request.args.get('refresh_token')

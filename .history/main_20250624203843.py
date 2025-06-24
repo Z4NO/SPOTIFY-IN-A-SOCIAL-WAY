@@ -1,4 +1,4 @@
-from cache_app import cache
+from cache_app import create_cache
 from flask import Flask, redirect, request, jsonify,  render_template, url_for
 from flask import session
 from tracks.tracks_operations import track as tracks_operations
@@ -28,7 +28,7 @@ app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 
 # Inicializa la caché
-cache.init_app(app)
+cache = Cache(app)
 
 #Registrar los blueprints
 app.register_blueprint(tracks_operations)
@@ -242,7 +242,6 @@ Returns:
     If there is an error updating the user, returns a 500 error.
 """
 @app.route('/refresh_token')
-@cache.cached(timeout=60)
 def refresh_token():
     rute_back = request.args.get('rute_back')
     refresh_token = request.args.get('refresh_token')

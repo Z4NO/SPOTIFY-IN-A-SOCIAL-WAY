@@ -1,4 +1,4 @@
-from cache_app import cache
+
 from flask import Flask, redirect, request, jsonify,  render_template, url_for
 from flask import session
 from tracks.tracks_operations import track as tracks_operations
@@ -23,12 +23,7 @@ app = Flask(__name__)
 # Generar una clave secreta para la app
 app.secret_key = secrets.token_hex(16)
 
-# Configura la caché (modo simple para pruebas)
-app.config['CACHE_TYPE'] = 'SimpleCache'
-app.config['CACHE_DEFAULT_TIMEOUT'] = 300
 
-# Inicializa la caché
-cache.init_app(app)
 
 #Registrar los blueprints
 app.register_blueprint(tracks_operations)
@@ -218,7 +213,6 @@ Returns:
     Response: A JSON response indicating whether the user is logged in or not.
 """
 @app.route('/check_if_user_is_logged/<id>')
-@cache.cached(timeout=60)
 def check_if_user_is_logged(id):
     is_logged_in = BaseManager()._check_user_is_login(id)
     return jsonify({'is_logged_in': is_logged_in})
@@ -242,7 +236,6 @@ Returns:
     If there is an error updating the user, returns a 500 error.
 """
 @app.route('/refresh_token')
-@cache.cached(timeout=60)
 def refresh_token():
     rute_back = request.args.get('rute_back')
     refresh_token = request.args.get('refresh_token')

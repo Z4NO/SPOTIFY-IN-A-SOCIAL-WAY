@@ -15,6 +15,9 @@ async def get_top_items(user_id: str, type: str):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
 
+
+    print(f"Token for user {user_id}: {token}")
+
     if base_manager._check_token_expired(user_id):
         refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
         original_params = {"user_id": user_id, "type": type}
@@ -86,6 +89,12 @@ async def add_song_to_playlist(user_id: str, target_id: str, playlist_id: str):
 
     return JSONResponse(content={"message": "Canción añadida", "track_id": track_id, "track_name": track_name, "track_uri": track_uri})
 
+
+@router.get("/check_if_user_is_logged/{id}")
+async def check_if_user_is_logged(id: str):
+    is_logged_in = BaseManager()._check_user_is_login(id)
+    return JSONResponse(content={"is_logged_in": is_logged_in}, status_code=200 if is_logged_in else 404)
+    
 @router.get("/add_target_song_to_queue/{user_id}/{target_id}")
 async def add_target_song_to_queue(user_id: str, target_id: str):
     base_manager = BaseManager()

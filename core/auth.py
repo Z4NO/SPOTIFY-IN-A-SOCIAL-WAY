@@ -94,8 +94,11 @@ async def callback(request: Request, code: str = None, state: str = None, error:
 
 
 
+
+
+
 @router.get("/refresh_token")
-def refresh_token(request: Request):
+async def refresh_token(request: Request):
     rute_back = request.query_params.get("rute_back")
     refresh_token = request.query_params.get("refresh_token")
     id = request.query_params.get("id")
@@ -119,7 +122,7 @@ def refresh_token(request: Request):
         id=id,
         authenticated_at=datetime.datetime.now(),
         spotify_expires_at=datetime.datetime.now() + datetime.timedelta(seconds=new_token_info['expires_in']),
-        spotify_token=Encripter()._encript(new_token_info['access_token']),
+        spotify_token=Encripter(MASTER_KEY)._encript(new_token_info['access_token']),
         refresh_token=refresh_token,
         key=None
     )
@@ -131,12 +134,14 @@ def refresh_token(request: Request):
         return HTMLResponse("Error al actualizar el usuario", status_code=500)
 
     # reconstruimos la ruta final
-    path = f"/{rute_back}/" + "/".join([original_params[k] for k in sorted(original_params)])
+    path = f"/{rute_back}/" + "/".join([original_params[k] for k in original_params])
     query_str = urllib.parse.urlencode({
         **original_params,
         "acces_token": new_token_info['access_token'],
         "refresh_token": refresh_token,
         "expires_in": int(datetime.datetime.now().timestamp() + new_token_info['expires_in'])
     })
+
+    print(f"Nuevo token para el usuario {id}: {new_token_info['access_token']}")
 
     return RedirectResponse(f"{path}?{query_str}")

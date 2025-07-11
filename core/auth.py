@@ -41,7 +41,7 @@ async def login(Id: str, Key: str):
 
     scopes = "user-read-private user-read-email playlist-modify-public playlist-modify-private " \
              "user-read-playback-state user-modify-playback-state user-top-read " \
-             "user-read-currently-playing user-follow-read user-follow-modify user-library-read user-library-modify"
+             "user-read-currently-playing user-follow-read user-follow-modify user-library-read user-library-modify user-read-recently-played"
 
     state = encripter._encript(f"{Id}:{Key}")
 
@@ -51,7 +51,7 @@ async def login(Id: str, Key: str):
         "redirect_uri": REDIRECT_URI,
         "scope": scopes,
         "show_dialog": True,
-        "state": state.decode()
+        "state": state
     }
 
     auth_url = f"{AUTH_URL}?{urllib.parse.urlencode(params)}"
@@ -86,7 +86,7 @@ async def callback(request: Request, code: str = None, state: str = None, error:
         authenticated_at=datetime.datetime.now(),
         spotify_expires_at=datetime.datetime.now() + datetime.timedelta(seconds=token_info["expires_in"]),
         spotify_token=encripter._encript(token_info["access_token"]),
-        refresh_token=encripter._decript(token_info["refresh_token"]),
+        refresh_token=encripter._encript(token_info["refresh_token"]),  # Encriptar, no desencriptar
         key=key
     )
     BaseManager()._add_user(user)

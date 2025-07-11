@@ -5,10 +5,10 @@ from fastapi.responses import RedirectResponse, JSONResponse
 import requests
 from managers.BaseManager import BaseManager
 from models.User import User
+from core.config import API_BASE_URL
 
 router = APIRouter(prefix="/playlists", tags=["playlists"])
 
-API_BASE_URL = 'https://api.spotify.com/v1/'
 
 @router.get("/playlists/{user_id}")
 def get_playlists_by_user(user_id: str):

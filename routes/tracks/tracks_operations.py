@@ -4,11 +4,10 @@ from fastapi.responses import RedirectResponse, JSONResponse
 import requests
 from managers.BaseManager import BaseManager
 from models.User import User
-
+from core.config import API_BASE_URL
 
 router = APIRouter(prefix="/tracks", tags=["tracks"])
 
-API_BASE_URL = 'https://api.spotify.com/v1/'
 #Añadir a la cola mas canciones del mismo artista de la canción que se está escuchando
 """
 Adds the top songs of the artists of the currently playing track to the user's playback queue.
@@ -124,7 +123,7 @@ Notes:
 """
 
 
-@router.get('/add_song_to_playlist/<user_id>/<playlist_id>/')
+@router.get('/add_current_song_to_playlist/<user_id>/<playlist_id>/')
 def add_song_to_playlist(user_id, playlist_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)

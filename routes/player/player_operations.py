@@ -150,3 +150,58 @@ async def add_target_song_to_queue(user_id: str, target_id: str):
     )
 
     return JSONResponse(content={"message": "Canción en cola", "track_uri": track_uri, "track_name": track_name, "track_id": track_id})
+
+
+@router.get('/friends_activity/{user_id}')
+async def get_friends_activity(user_id: str):
+    base_manager = BaseManager()
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        original_params = {"user_id": user_id}
+        params = {
+            "rute_back": "player/friends_activity",
+            "refresh_token": refresh_token_obteined,
+            "id": user_id,
+            "original_params": str(original_params)
+        }
+        return RedirectResponse(f"/refresh_token?{urllib.parse.urlencode(params)}")
+    
+
+    token = base_manager._obtain_user_token(user_id)
+
+    # Primero antes de nada debemos obtener la canción que está escuchando el usuario
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    # Obtenemos la canción que está escuchando el usuario y guaradamos los id de los artistas
+    response = requests.get(API_BASE_URL + 'me/player', headers=headers)
+
+    if response.status_code != 200:
+        return JSONResponse(content={"error": "Error al obtener la canción actual del usuario", "detail": response.text}, status_code=500)
+    
+    informarion = response.json()
+
+    headers = {
+        'Authorization': f'Bearer {token}'
+    }
+
+    # Obtenemos la informacion de las 3 reprudcciones mas recientes del usuario
+    response = requests.get(API_BASE_URL + 'me/player/recently-played?limit=3', headers=headers)
+
+    if response.status_code != 200:
+        return JSONResponse(content={"error": "Error al obtener la actividad reciente del usuario", "detail": response.text}, status_code=500)
+    
+    recent_plays = response.json()
+
+    informacion_extraida = {
+        "device_type": informarion['device']['type'],
+        "volume_percent": informarion['device']['volume_percent'],
+        "currently_playing": informarion['item']['name'],
+        "currently_playing_type": informarion['currently_playing_type'],
+        "last_played": [item['track']['name'] for item in recent_plays['items']],
+    }
+
+    return JSONResponse(content=informacion_extraida)
+

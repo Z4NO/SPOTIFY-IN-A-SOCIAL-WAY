@@ -1,6 +1,5 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google.cloud.firestore import FieldFilter
 import datetime
 from models.User import User
 from managers.Encripter import Encripter

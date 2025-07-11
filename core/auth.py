@@ -103,7 +103,7 @@ async def refresh_token(request: Request):
     refresh_token = request.query_params.get("refresh_token")
     id = request.query_params.get("id")
     original_params_raw = request.query_params.get("original_params")
-    original_params = eval(original_params_raw) if original_params_raw else {}
+    original_params = literal_eval(original_params_raw) if original_params_raw else {}
 
     if not refresh_token:
         return HTMLResponse("No refresh token provided", status_code=400)

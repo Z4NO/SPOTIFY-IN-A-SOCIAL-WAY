@@ -3,8 +3,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import RedirectResponse, JSONResponse
 import requests
-import os
-import datetime
 from managers.BaseManager import BaseManager
 from models.User import User
 

@@ -122,11 +122,9 @@ Notes:
     - The function uses the Spotify API endpoints `me/player` to get the currently playing track
       and `playlists/{playlist_id}/tracks` to add the track to the playlist.
 """
-<<<<<<< HEAD:tracks/tracks_operations.py
-@track.route('/add_current_song_to_playlist/<user_id>/<playlist_id>/')
-=======
+
+
 @router.get('/add_song_to_playlist/<user_id>/<playlist_id>/')
->>>>>>> flast-api:routes/tracks/tracks_operations.py
 def add_song_to_playlist(user_id, playlist_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)

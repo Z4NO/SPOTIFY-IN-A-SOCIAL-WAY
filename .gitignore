@@ -175,6 +175,8 @@ cython_debug/
 
 # Archivos de configuración sensibles
 better-discord-spotify-firebase-adminsdk-fbsvc-afe93f23d7.json
-history/
+.history/
 .history/
 .idea/
+
+

@@ -1,3 +1,24 @@
+# main.py
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from templates import templates
+
+from routes.player import player_operations  
+from routes.playlist import playlist_operatiosn
+from routes.tracks import tracks_operations
+from core import auth
+
+app = FastAPI()
+
+# No hace falta calcular rutas, están en el mismo nivel
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+app.include_router(auth.router)
+app.include_router(player_operations.router)
+app.include_router(playlist_operatiosn.router)
+app.include_router(tracks_operations.router)
+
 from cache_app import cache
 from flask import Flask, redirect, request, jsonify,  render_template, url_for
 from flask import session

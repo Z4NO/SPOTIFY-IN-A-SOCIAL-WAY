@@ -1,27 +1,14 @@
-from flask import Flask, redirect, request, jsonify,  render_template, url_for, Blueprint
-from flask import session
-import requests
 import secrets
-import urllib.parse
-import datetime
-from BaseManager import BaseManager
-from Encripter import Encripter
-from dotenv import load_dotenv
-from User import User
-import os
-from typing import Final
-
-# Datos de la app de Spotify
-CLIENT_ID = os.getenv('CLIENT_ID')
-REDIRECT_URI = 'http://localhost:5000/callback'
+from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse, JSONResponse
+import requests
+from managers.BaseManager import BaseManager
+from models.User import User
 
 
-# URLs de Spotify
-AUTH_URL = 'https://accounts.spotify.com/authorize'  # URL de autorización
-TOKEN_URL = 'https://accounts.spotify.com/api/token'  # URL de obtención de token
-API_BASE_URL = 'https://api.spotify.com/v1/'  # URL base de la API de Spotify
+router = APIRouter(prefix="/tracks", tags=["tracks"])
 
-track = Blueprint('tracks_operations', __name__, url_prefix='/tracks_operations')  
+API_BASE_URL = 'https://api.spotify.com/v1/'
 #Añadir a la cola mas canciones del mismo artista de la canción que se está escuchando
 """
 Adds the top songs of the artists of the currently playing track to the user's playback queue.
@@ -44,15 +31,17 @@ Notes:
     - The function only works for premium Spotify users.
     - The function uses the Spotify Web API to fetch user and track information.
 """
-@track.route('/add_artist_songs_to_queue/<user_id>/')
+@router.get('/add_artist_songs_to_queue/{user_id}')
 def add_artist_songs_to_queue(user_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
 
     if base_manager._check_token_expired(user_id):
         refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
-        orginial_params = request.view_args.copy()
-        return redirect(url_for('refresh_token', rute_back='tracks_operations.add_artist_songs_to_queue', refresh_token=refresh_token_obteined, id=user_id, original_params=orginial_params))
+        orginial_params = {"user_id": user_id}
+        return RedirectResponse(
+            url=f"/refresh_token?rute_back=tracks/add_artist_songs_to_queue&refresh_token={refresh_token_obteined}&id={user_id}&original_params={orginial_params}"
+        )
     
     #Antes de comenzar a añadir canciones a la cola, debemos saber si el usuario es premiun o no
     headers = {
@@ -72,12 +61,11 @@ def add_artist_songs_to_queue(user_id):
     response = requests.get(API_BASE_URL + 'me/player', headers=headers)
     song = response.json()
     if song['is_playing'] == False:
-        return "No hay canción en reproducción", 500
+        return JSONResponse(content={"error": "No hay canción en reproducción"})
     if 'item' in song:
         artists_list_id = [artist['id'] for artist in song['item']['artists']]
-        #return jsonify(artists_list_id), 200
     else:
-        return "No track is currently playing:" + {song}, 500
+       return JSONResponse(content={"error": "No hay canción en reproducción"})
     
     # Obtenemos las canciones de los artistas
     tracks_uris = []
@@ -98,7 +86,7 @@ def add_artist_songs_to_queue(user_id):
                 #Añadimos solo el primer album de cada artista
                 tracks_uris.append(tracks['tracks'][0]['uri'])
     except Exception as e:
-        return "Error al obtener las canciones de los artistas", 500
+        return JSONResponse(content={"error": f"Error al obtener las canciones de los artistas: {e}"}, status_code=500)
     
     # Solo nos queda añadir las canciones a la cola
     headers = {
@@ -111,10 +99,7 @@ def add_artist_songs_to_queue(user_id):
             params = { 'uri': track_uri }
             response = requests.post(API_BASE_URL + 'me/player/queue', headers=headers, params=params)
 
-        return jsonify({
-            "message": "Canciones añadidas a la cola correctamente",
-            "tracks_uris": tracks_uris
-        }), 200
+        return JSONResponse(content={"message": "Canciones añadidas a la cola correctamente", "tracks_uris": tracks_uris})
     except Exception as e:
         return "Error al añadir las canciones a la cola", 500
     
@@ -137,15 +122,22 @@ Notes:
     - The function uses the Spotify API endpoints `me/player` to get the currently playing track
       and `playlists/{playlist_id}/tracks` to add the track to the playlist.
 """
+<<<<<<< HEAD:tracks/tracks_operations.py
 @track.route('/add_current_song_to_playlist/<user_id>/<playlist_id>/')
+=======
+@router.get('/add_song_to_playlist/<user_id>/<playlist_id>/')
+>>>>>>> flast-api:routes/tracks/tracks_operations.py
 def add_song_to_playlist(user_id, playlist_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
 
     if base_manager._check_token_expired(user_id):
         refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
-        orginial_params = request.view_args.copy()
-        return redirect(url_for('refresh_token', rute_back='tracks_operations.add_song_to_playlist', refresh_token=refresh_token_obteined, id=user_id, original_params=orginial_params))
+        orginial_params = {"user_id": user_id, "playlist_id": playlist_id}
+
+        return RedirectResponse(
+            url=f"/refresh_token?rute_back=tracks/add_song_to_playlist&refresh_token={refresh_token_obteined}&id={user_id}&original_params={orginial_params}"
+        )
     
     # Primero antes de nada debemos obtener la canción que está escuchando el usuario
     headers = {
@@ -177,14 +169,16 @@ def add_song_to_playlist(user_id, playlist_id):
     try:
         response = requests.post(API_BASE_URL + f'playlists/{playlist_id}/tracks', headers=headers, json=req_body)
         if response.status_code != 201:
-            return f"Error al añadir la canción a la playlist: {response.text}", 500
+            return JSONResponse(content={"error": response.text}, status_code=500)
         
-        return jsonify({
+
+        return JSONResponse(content={
             "message": "Canción añadida a la playlist correctamente",
             "track_id": id_actual_track,
             "track_name": name_actual_track,
             "track_uri": uri_actual_track
-        }), 200
+        })
+        
     except Exception as e:
         return "Error al añadir la canción a la playlist", 500
     
@@ -211,15 +205,22 @@ Notes:
       and artist name.
     - The function assumes the presence of a valid `API_BASE_URL` constant and the `requests` library.
 """
-@track.route('/search_song/<song_name>/<artist_name>/<user_id>/')
+@router.get('/search_song/<song_name>/<artist_name>/<user_id>/')
 def search_song(song_name, artist_name,user_id):
     base_manager = BaseManager()
     token = base_manager._obtain_user_token(user_id)
 
     if base_manager._check_token_expired(user_id):
         refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
-        orginial_params = request.view_args.copy()
-        return redirect(url_for('refresh_token', rute_back='tracks_operations.search_song', refresh_token=refresh_token_obteined, id=user_id, original_params=orginial_params))
+        orginial_params = {
+            "user_id": user_id,
+            "song_name": song_name,
+            "artist_name": artist_name
+        }
+        
+        return RedirectResponse(
+            url=f"/refresh_token?rute_back=tracks/search_song&refresh_token={refresh_token_obteined}&id={user_id}&original_params={orginial_params}"
+        )
     
     headers = {
         'Authorization': f'Bearer {token}'
@@ -233,16 +234,16 @@ def search_song(song_name, artist_name,user_id):
     try:
         response = requests.get(API_BASE_URL + 'search', headers=headers, params=params)
         if response.status_code != 200:
-            return f"Error al buscar la canción: {response.text}", 500
+           return JSONResponse(content={"error": response.text}, status_code=500)
         song = response.json()
         #devolvemos solo el uri de la cancion para poder añadirla a la cola y el nombre de la cancion y el id de la cancion
-        return jsonify({
+        return JSONResponse(content={
             "uri": song['tracks']['items'][0]['uri'],
             "name": song['tracks']['items'][0]['name'],
             "id": song['tracks']['items'][0]['id']
-        }), 200
+        })
     except Exception as e:
-        return "Error al buscar la canción", 500
+        return JSONResponse(content={"error": f"Error al buscar la canción: {e}"}, status_code=500)
     
 
 

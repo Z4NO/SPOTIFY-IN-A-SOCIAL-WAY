@@ -1,10 +1,5 @@
 import datetime
-import firebase_admin
-from firebase_admin import credentials, firestore
-from google.cloud.firestore import FieldFilter
 import datetime
-import os
-
 class User:
     def __init__(
             self, 

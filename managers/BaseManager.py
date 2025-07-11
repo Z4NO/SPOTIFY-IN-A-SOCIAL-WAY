@@ -1,23 +1,24 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google.cloud.firestore import FieldFilter
 import datetime
-from User import User
-from Encripter import Encripter
+from models.User import User
+from managers.Encripter import Encripter
 import os
 
 class BaseManager:
     def __init__(self):
         try:
-            self.cred = credentials.Certificate(os.path.join(os.path.dirname(__file__), "better-discord-spotify-firebase-adminsdk-fbsvc-afe93f23d7.json"))
+            cred_path = os.path.join(os.path.dirname(__file__), "better-discord-spotify-firebase-adminsdk-fbsvc-afe93f23d7.json")
             if not firebase_admin._apps:
-                firebase_admin.initialize_app(self.cred)
+                cred = credentials.Certificate(cred_path)
+                firebase_admin.initialize_app(cred)
             self.db = firestore.client()
             self.encripter = Encripter(os.getenv('MASTER_KEY').encode())
         except Exception as e:
             print(f"Error al iniciar la base de datos: {e}")
             self.db = None
 
+        
     def _add_user(self, user: User):
         doc_ref = self.db.collection("users")
 
@@ -26,7 +27,6 @@ class BaseManager:
             "authenticated_at": user.authenticated_at,
             "refresh_token": user.refresh_token,
             "spotify_token": user.spotify_token,
-            "spotify_expires_at": user.spotify_expires_at,
             "spotify_expires_at": user.spotify_expires_at,
             "key": user.key
         })
@@ -45,19 +45,14 @@ class BaseManager:
             )
             
     def _check_user_is_login(self, id) -> bool:
-        user_ref = self.db.collection("users")
-        user_query = user_ref.where("Id", "==", id).stream()
-        if len(list(user_query)) > 0:
-            return True
+        user_query = self.db.collection("users").where("Id", "==", id).stream()
+        return len(list(user_query)) > 0
 
     def _check_credentials_exists(self, id, key) -> bool:
         temp_data_ref= self.db.collection("tempDataLogin")
         temp_data_query = temp_data_ref.where("ID", "==", id).where("expires_at", ">", datetime.datetime.now(datetime.timezone.utc)).where("Key", "==", key).stream()
 
-        if len(list(temp_data_query)) > 0:
-            return True
-        else:
-            return False
+        return len(list(temp_data_query)) > 0
         
     def _check_token_expired(self, id) -> bool:
         user_ref = self.db.collection("users")
@@ -84,7 +79,6 @@ class BaseManager:
         user_ref = self.db.collection("users")
         user_query = user_ref.where("Id", "==", id).stream()
         user_list = list(user_query)
-        print("User query: ", user_query)
 
         if len(user_list) == 0:
             return "No users found"
@@ -118,10 +112,7 @@ class BaseManager:
 
         for doc in user_list:
             playlists = doc.to_dict()["coop_playlists"]
-            if len(playlists) > 0:
-                return True
-            else:
-                return False
+            return len(playlists) > 0
         
     def _add_coop_playlists(self, id, playlist_ids: list):
         user_ref = self.db.collection("users")
@@ -149,7 +140,8 @@ class BaseManager:
 
 
     def close(self):
-        firebase_admin.delete_app(firebase_admin.get_app())
+        if firebase_admin.get_app():
+            firebase_admin.delete_app(firebase_admin.get_app())
 
         
 

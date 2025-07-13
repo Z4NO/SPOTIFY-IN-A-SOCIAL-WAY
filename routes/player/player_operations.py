@@ -205,3 +205,51 @@ async def get_friends_activity(user_id: str):
 
     return JSONResponse(content=informacion_extraida)
 
+@router.get('/follow/{user_id}/{target_id}')
+async def follow_user(user_id: str, target_id: str):
+    base_manager = BaseManager()
+    token = base_manager._obtain_user_token(user_id)
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        original_params = {"user_id": user_id, "target_id": target_id}
+        params = {
+            "rute_back": "player/follow",
+            "refresh_token": refresh_token_obteined,
+            "id": user_id,
+            "original_params": str(original_params)
+        }
+        return RedirectResponse(f"/refresh_token?{urllib.parse.urlencode(params)}")
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.put(f"{API_BASE_URL}me/following?type=user&ids={target_id}", headers=headers)
+
+    if response.status_code == 204:
+        return JSONResponse(content={"message": "Usuario seguido correctamente"}, status_code=200)
+    else:
+        return JSONResponse(content={"error": "Error al seguir al usuario", "detail": response.text}, status_code=500)
+    
+@router.get('/unfollow/{user_id}/{target_id}')
+async def unfollow_user(user_id: str, target_id: str):
+    base_manager = BaseManager()
+    token = base_manager._obtain_user_token(user_id)
+
+    if base_manager._check_token_expired(user_id):
+        refresh_token_obteined = base_manager._obtain_user_refresh_token(user_id)
+        original_params = {"user_id": user_id, "target_id": target_id}
+        params = {
+            "rute_back": "player/unfollow",
+            "refresh_token": refresh_token_obteined,
+            "id": user_id,
+            "original_params": str(original_params)
+        }
+        return RedirectResponse(f"/refresh_token?{urllib.parse.urlencode(params)}")
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.delete(f"{API_BASE_URL}me/following?type=user&ids={target_id}", headers=headers)
+
+    if response.status_code == 204:
+        return JSONResponse(content={"message": "Usuario dejado de seguir correctamente"}, status_code=200)
+    else:
+        return JSONResponse(content={"error": "Error al dejar de seguir al usuario", "detail": response.text}, status_code=500)
+    

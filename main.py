@@ -18,10 +18,10 @@ app = FastAPI()
 # Configurar middleware de sesiones
 app.add_middleware(
     SessionMiddleware,
-    secret_key=secrets.token_urlsafe(32)  # Genera una clave secreta aleatoria
+    secret_key=secrets.token_urlsafe(32)  
 )
 
-# No hace falta calcular rutas, están en el mismo nivel
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth.router)

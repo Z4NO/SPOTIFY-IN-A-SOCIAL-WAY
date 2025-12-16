@@ -21,7 +21,7 @@ async def index_get(request: Request):
 async def index_post(request: Request, ID: str = Form(...), Key: str = Form(...)):
     base_manager = BaseManager()
     if base_manager._check_user_is_login(ID):
-        return RedirectResponse(url="/playlist", status_code=302)
+        return RedirectResponse(url=f"/playlists/playlists/{ID}", status_code=200)
     
     if base_manager._check_credentials_exists(ID, Key):
         request.session["ID_DS"] = ID
@@ -86,7 +86,7 @@ async def callback(request: Request, code: str = None, state: str = None, error:
         authenticated_at=datetime.datetime.now(),
         spotify_expires_at=datetime.datetime.now() + datetime.timedelta(seconds=token_info["expires_in"]),
         spotify_token=encripter._encript(token_info["access_token"]),
-        refresh_token=encripter._encript(token_info["refresh_token"]),  # Encriptar, no desencriptar
+        refresh_token=encripter._encript(token_info["refresh_token"]),  
         key=key
     )
     BaseManager()._add_user(user)
